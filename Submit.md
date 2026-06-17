@@ -1,6 +1,6 @@
 # [우리FISA 6기] 클라우드 엔지니어링 과정 상암 비버즈 · Global Bridge
 
-**[Team Repostory 바로 가기](https://github.com/orgs/Sangam-Beavers/repositories)**
+**[Team Repository 바로 가기](https://github.com/orgs/Sangam-Beavers/repositories)**
 
 본 문서는 외국인 근로자를 위한 클라우드 금융 플랫폼 **Global Bridge**의 프로젝트 산출물입니다. 온프렘과 AWS를 동일한 표준으로 구축한 운영급 고가용성 인프라 위에 송금, 환전, AI 서류 분석, 커뮤니티 서비스를 제공합니다.
 
