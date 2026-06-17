@@ -1,10 +1,12 @@
 # [우리FISA 6기] 클라우드 엔지니어링 과정 상암 비버즈 · Global Bridge
 
+**[Team Repostory 바로 가기](https://github.com/orgs/Sangam-Beavers/repositories)**
+
 본 문서는 외국인 근로자를 위한 클라우드 금융 플랫폼 **Global Bridge**의 프로젝트 산출물입니다. 온프렘과 AWS를 동일한 표준으로 구축한 운영급 고가용성 인프라 위에 송금, 환전, AI 서류 분석, 커뮤니티 서비스를 제공합니다.
 
 ## 1. 프로젝트 개요
 
-* **주제**: Global Bridge. 외국인 근로자를 위한 클라우드 금융 플랫폼으로, 송금 및 환전 전자지갑, AI 서류 분석, 커뮤니티 기능을 단일 플랫폼으로 통합 제공합니다.s
+* **주제**: Global Bridge. 외국인 근로자를 위한 클라우드 금융 플랫폼으로, 송금 및 환전 전자지갑, AI 서류 분석, 커뮤니티 기능을 단일 플랫폼으로 통합 제공합니다.
 * **프로젝트 기획 배경**: 국내 체류 외국인 근로자는 약 110만 명에 이르며, 복잡하고 비용이 높은 해외송금, 이해하기 어려운 한국어 계약서, 부족한 생활 및 비자 정보라는 공통의 어려움을 겪고 있습니다. 본 팀은 이러한 문제의 본질을 ‘신뢰’로 정의하였으며, 고객의 신뢰와 수익을 지속적으로 보장하기 위해서는 중단 없이 안전한 인프라가 전제되어야 한다고 판단하였습니다. 이에 고가용성을 설계의 출발점으로 설정하고, 온프렘 환경과 AWS를 동일한 빌딩블록으로 구축한 기반 위에 금융 서비스를 구현하였습니다.
 * **기술 스택**
     * **Backend**: Java 17, Spring Boot 3.5, MySQL 8.0, Redis 및 Valkey(Redisson 분산락), Apache Kafka, Micrometer 및 Prometheus
@@ -14,9 +16,9 @@
     * **On-prem**: vSphere(CPI 및 CSI), Rocky Linux 9 Kubernetes, Cilium(eBPF 및 Hubble), pfSense(CARP HA), Vault(Raft 3노드), Authentik(SSO), Harbor
     * **IaC 및 DevOps**: Terraform, Jenkins, SonarQube, Kaniko, Harbor, ArgoCD(GitOps), Helm, External Secrets(ESO), Tailscale 및 WireGuard, FRR BGP
 
-## 2. 아키텍쳐
+## 2. 아키텍처
 
-### 2-1. 시스템 아키텍쳐
+### 2-1. 시스템 아키텍처
 
 ![시스템 아키텍처](./submit_images/01_system_architecture_v2.png)
 
@@ -83,7 +85,7 @@ resource "aws_rds_cluster" "this" {
 # instance_count = 1 → writer만, 2 이상 → writer + reader(자동 승격 대상)
 resource "aws_rds_cluster_instance" "this" { count = var.instance_count }
 ```
-* **코드 링크**: [modules/elasticache/main.tf](https://github.com/{ORG}/cloud-infra-iac/blob/main/modules/elasticache/main.tf), [modules/aurora/main.tf](https://github.com/{ORG}/cloud-infra-iac/blob/main/modules/aurora/main.tf)
+**코드 링크**: [modules/elasticache/main.tf](https://github.com/Sangam-Beavers/cloud-infra-iac/blob/main/modules/elasticache/main.tf), [modules/aurora/main.tf](https://github.com/Sangam-Beavers/cloud-infra-iac/blob/main/modules/aurora/main.tf)
 
 #### [기능 2] MCP 도구 오케스트레이션 기반 AI 챗봇
 
@@ -108,7 +110,7 @@ async with streamablehttp_client(url, headers=headers) as (read, write, _):
         result = await session.call_tool(
             "tavily_search", arguments={"query": query, "max_results": max_results})
 ```
-* **코드 링크**: [gb-chatbot-lambda/src/chatbot.py](https://github.com/{ORG}/gb-chatbot-lambda/blob/main/src/chatbot.py), [src/tools.py](https://github.com/{ORG}/gb-chatbot-lambda/blob/main/src/tools.py), [src/app.py (SSE)](https://github.com/{ORG}/gb-chatbot-lambda/blob/main/src/app.py)
+**코드 링크**: [gb-chatbot-lambda/src/chatbot.py](https://github.com/Sangam-Beavers/gb-chatbot-lambda/blob/develop/src/chatbot.py), [src/tools.py](https://github.com/Sangam-Beavers/gb-chatbot-lambda/blob/develop/src/tools.py), [src/app.py (SSE)](https://github.com/Sangam-Beavers/gb-chatbot-lambda/blob/develop/src/app.py)
 
 #### [기능 3] 서버리스 RAG 파이프라인 기반 AI 서류 분석
 
@@ -141,7 +143,7 @@ def _kb_lookup(query_text):
         retrievalConfiguration={"vectorSearchConfiguration": {"numberOfResults": KB_NUM_RESULTS}})
     return "\n---\n".join(r["content"]["text"] for r in res.get("retrievalResults", []))
 ```
-* **코드 링크**: [gb-document-lambda/lambda_a/handler.py](https://github.com/{ORG}/gb-document-lambda/blob/main/lambda_a/handler.py), [lambda_b/handler.py](https://github.com/{ORG}/gb-document-lambda/blob/main/lambda_b/handler.py)
+**코드 링크**: [gb-document-lambda/lambda_a/handler.py](https://github.com/Sangam-Beavers/gb-document-lambda/blob/main/lambda_a/handler.py), [lambda_b/handler.py](https://github.com/Sangam-Beavers/gb-document-lambda/blob/main/lambda_b/handler.py)
 
 #### [기능 4] 멱등성 및 분산락 기반 안전한 송금 및 환전
 
@@ -168,7 +170,7 @@ if (lock == null) throw new BusinessException(CommonErrorCode.SERVICE_UNAVAILABL
 try { return self.executeInTransaction(...); }
 finally { if (lock.isHeldByCurrentThread()) lock.unlock(); }
 ```
-* **코드 링크**: [wallet-service/DistributedLockHelper.java](https://github.com/{ORG}/gb-backend/blob/main/services/wallet-service/src/main/java/com/gb/wallet/global/redis/DistributedLockHelper.java), [TransferServiceImpl.java](https://github.com/{ORG}/gb-backend/blob/main/services/wallet-service/src/main/java/com/gb/wallet/domain/transaction/service/impl/TransferServiceImpl.java)
+**코드 링크**: [wallet-service/DistributedLockHelper.java](https://github.com/Sangam-Beavers/gb-backend/blob/develop/services/wallet-service/src/main/java/com/gb/wallet/global/redis/DistributedLockHelper.java), [TransferServiceImpl.java](https://github.com/Sangam-Beavers/gb-backend/blob/develop/services/wallet-service/src/main/java/com/gb/wallet/domain/transaction/service/impl/TransferServiceImpl.java)
 
 #### [기능 5] OIDC IdP 이중화 기반 무중단 통합 인증
 
@@ -196,4 +198,4 @@ String userPublicId = jwt.getClaimAsString(CLAIM_PUBLIC_ID);   // "public_id"
 if (!StringUtils.hasText(userPublicId)) throw new BusinessException(AuthErrorCode.UNAUTHORIZED);
 return userPublicId;
 ```
-* **코드 링크**: [member-service/SecurityConfig.java](https://github.com/{ORG}/gb-backend/blob/main/services/member-service/src/main/java/com/gb/member/global/config/SecurityConfig.java), [CurrentUserPublicIdArgumentResolver.java](https://github.com/{ORG}/gb-backend/blob/main/services/member-service/src/main/java/com/gb/member/global/security/CurrentUserPublicIdArgumentResolver.java), [common-security/RestAuthenticationEntryPoint.java](https://github.com/{ORG}/gb-backend/blob/main/common/common-security/src/main/java/com/gb/common/security/RestAuthenticationEntryPoint.java)
+**코드 링크**: [member-service/SecurityConfig.java](https://github.com/Sangam-Beavers/gb-backend/blob/develop/services/member-service/src/main/java/com/gb/member/global/config/SecurityConfig.java), [CurrentUserPublicIdArgumentResolver.java](https://github.com/Sangam-Beavers/gb-backend/blob/develop/services/member-service/src/main/java/com/gb/member/global/security/CurrentUserPublicIdArgumentResolver.java), [common-security/RestAuthenticationEntryPoint.java](https://github.com/Sangam-Beavers/gb-backend/blob/develop/common/common-security/src/main/java/com/gb/common/security/RestAuthenticationEntryPoint.java)
