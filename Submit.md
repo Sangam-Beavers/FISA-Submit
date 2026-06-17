@@ -11,7 +11,7 @@
 * **기술 스택**
     * **Backend**: Java 17, Spring Boot 3.5, MySQL 8.0, Redis 및 Valkey(Redisson 분산락), Apache Kafka, Micrometer 및 Prometheus
     * **Frontend**: React 19, TypeScript, Vite
-    * **AI (서버리스)**: Python 3.12, AWS Lambda, Amazon Bedrock(Claude Sonnet), Bedrock Knowledge Bases(S3 Vectors), SQS, DynamoDB, MCP
+    * **AI (서버리스)**: Python 3.12, AWS Lambda, Amazon Bedrock(Claude Sonnet 4.6·Haiku 4.5), Bedrock Knowledge Bases(S3 Vectors), SQS, DynamoDB, MCP
     * **Cloud (AWS 단일 계정)**: EKS, Aurora MySQL, ElastiCache(Valkey), CloudFront 및 WAF, API Gateway, ALB, Cognito, KMS, CloudTrail, Pod Identity
     * **On-prem**: vSphere(CPI 및 CSI), Rocky Linux 9 Kubernetes, Cilium(eBPF 및 Hubble), pfSense(CARP HA), Vault(Raft 3노드), Authentik(SSO), Harbor
     * **IaC 및 DevOps**: Terraform, Jenkins, SonarQube, Kaniko, Harbor, ArgoCD(GitOps), Helm, External Secrets(ESO), Tailscale 및 WireGuard, FRR BGP
@@ -24,13 +24,13 @@
 
 ### 설명
 
-온프렘 개발 환경과 AWS의 두 VPC(운영·스테이징 VPC, AI 분석 전용 VPC)를 VPC Peering과 WireGuard 터널로 연결한 하이브리드 구조입니다. 온프렘과 AWS는 양쪽 퍼블릭 서브넷의 WireGuard EC2(ASG 자가복구)와 FRR(BGP)로 사이트 간 연결되며, 개발자 원격 접속은 Tailscale 메시로 보완합니다.
+온프렘 개발 환경과 AWS의 운영 VPC(10.100.0.0/16)·스테이징 VPC(10.120.0.0/16)를 WireGuard 터널로 연결한 하이브리드 구조이며, 운영과 스테이징은 각각 독립된 VPC로 분리되어 있습니다. 온프렘과 AWS는 양쪽 퍼블릭 서브넷의 WireGuard EC2(ASG 자가복구)와 FRR(BGP)로 사이트 간 연결되며, 개발자 원격 접속은 Tailscale 메시로 보완합니다.
 
 온프렘은 vSphere 위에 구성하였습니다. pfSense를 CARP HA(Active/Standby)로 이중화하여 게이트웨이로 두고, Rocky Linux 9 Kubernetes 클러스터에 GitOps 도구(Jenkins·Harbor·ArgoCD·SonarQube·Trivy), 보안(Authentik SSO·Vault HA·cert-manager·ESO), Cilium(eBPF)·Envoy 네트워킹을 올렸습니다. 별도 Dev 클러스터에는 member·community·document·wallet 서비스와 MySQL·Redis를 띄워 비용 효율적인 개발기로 사용합니다.
 
-AWS 운영·스테이징 VPC는 각각 3개·2개 가용영역에 분산했습니다. Route53·ACM·CloudFront·WAF 엣지와 API Gateway를 거쳐 Private Subnet의 EKS 클러스터(ASG 3~9 노드, 다중 AZ)로 트래픽이 들어가며, Cilium·ALB Controller·ESO·Cluster Autoscaler 위에서 member·community·document·wallet·admin·app-admin 서비스와 MCP 서버(mcp-community·mcp-exchange, Internal NLB), exchange-updater, Kafka, Prometheus·Grafana·YACE 모니터링이 동작합니다. 데이터 계층은 도메인별로 분리한 Aurora Serverless v2 세 클러스터(Core·Content·Admin, writer/reader 다중 AZ)와 ElastiCache Valkey(3-AZ)로 구성하고, Cognito·KMS·Secrets Manager·Parameter Store(관리형)와 CloudWatch·CloudTrail(관측·감사)을 함께 둡니다.
+AWS 운영 VPC와 스테이징 VPC는 각각 독립된 VPC로 다중 가용영역에 분산했습니다. Route53·ACM·CloudFront·WAF 엣지와 API Gateway를 거쳐 Private Subnet의 EKS 클러스터(ASG 3~9 노드, 다중 AZ)로 트래픽이 들어가며, Cilium·ALB Controller·ESO·Cluster Autoscaler 위에서 member·community·document·wallet·admin·app-admin 서비스와 MCP 서버(mcp-community·mcp-exchange, Internal NLB), exchange-updater, Kafka, Prometheus·Grafana·YACE 모니터링이 동작합니다. 데이터 계층은 도메인별로 분리한 Aurora Serverless v2 세 클러스터(Core·Content·Admin, writer/reader 다중 AZ)와 ElastiCache Valkey(3-AZ)로 구성하고, Cognito·KMS·Secrets Manager·Parameter Store(관리형)와 CloudWatch·CloudTrail(관측·감사)을 함께 둡니다.
 
-AI 분석 전용 VPC(10.110.0.0/16)는 VPC Peering으로 운영 VPC와 연결되며, Lambda(서류 추출·분석, 챗봇, 커뮤니티 번역)가 Bedrock(Claude·Knowledge Bases·S3 Vectors)과 DynamoDB·S3를 사용해 AI 서류 분석과 챗봇을 수행하고, 분석 결과는 SQS로 운영 백엔드에 전달합니다. 전 구간은 4계층 서브넷(public·private·db·mgmt)으로 격리하고 Terraform(IaC)과 GitOps로 관리합니다.
+AI 분석은 별도의 서버리스 환경(AI팀 소유, 본 IaC 외부)에서 수행되며, Lambda(서류 추출·분석, 챗봇, 커뮤니티 번역)가 Bedrock(Claude·Knowledge Bases·S3 Vectors)과 DynamoDB·S3를 사용해 AI 서류 분석과 챗봇을 처리하고, 분석 결과는 SQS로 운영 백엔드에 전달합니다. 전 구간은 4계층 서브넷(public·private·db·mgmt)으로 격리하고 Terraform(IaC)과 GitOps로 관리합니다.
 
 ### 2-2. 소프트웨어 아키텍처
 
